@@ -12,3 +12,8 @@ anyhow = "1.0.66"
 name = "day_1"
 path = "src/day_1/main.rs"
 test = false
+
+[[bin]]
+name = "day_2"
+path = "src/day_2/main.rs"
+test = false

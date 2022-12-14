@@ -27,34 +27,37 @@ fn compile_directory_sizes(vector: &mut Vec<usize>, dir: Rc<RefCell<Directory>>)
     }
 }
 
+fn change_directory(
+    directory: &str,
+    current_dir: Rc<RefCell<Directory>>,
+) -> Rc<RefCell<Directory>> {
+    if directory == ".." {
+        current_dir.borrow_mut().get_parent().unwrap()
+    } else {
+        current_dir
+            .borrow_mut()
+            .get_child(directory)
+            .unwrap()
+            .as_directory()
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     let root = Directory::new_root();
     let mut current_dir = root.clone();
 
     for line in INPUT.lines() {
         let line: Vec<&str> = line.trim().split(" ").collect();
-        match line[0] {
-            "$" => {
-                if line[1] == "cd" {
-                    match line[2] {
-                        ".." => {
-                            let parent = current_dir.borrow_mut().get_parent().unwrap();
-                            current_dir = parent;
-                        }
-                        "/" => (),
-                        directory => {
-                            let parent = current_dir
-                                .borrow_mut()
-                                .get_child(directory)
-                                .unwrap()
-                                .as_directory();
-                            current_dir = parent;
-                        }
-                    }
-                }
-            }
-            "dir" => current_dir.borrow_mut().add_directory(line[1]),
-            size => current_dir.borrow_mut().add_file(line[1], size.parse()?),
+        match (
+            line[0],
+            line[1],
+            if line.len() >= 3 { line[2] } else { " " },
+        ) {
+            ("$", "cd", "/") => (),
+            ("$", "ls", _) => (),
+            ("$", "cd", directory) => current_dir = change_directory(directory, current_dir),
+            ("dir", name, _) => current_dir.borrow_mut().add_directory(name),
+            (size, name, _) => current_dir.borrow_mut().add_file(name, size.parse()?),
         }
     }
 

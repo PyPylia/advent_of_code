@@ -42,3 +42,8 @@ test = false
 name = "day_7"
 path = "src/day_7/main.rs"
 test = false
+
+[[bin]]
+name = "day_8"
+path = "src/day_8/main.rs"
+test = false

@@ -64,11 +64,10 @@ pub fn second(input: &str) -> eyre::Result<String> {
         .lines()
         .map(|line| {
             let first = get_first_number(line.chars(), number_map.clone()).unwrap_or(0);
-
-            let second =
+            let last =
                 get_first_number(line.chars().rev(), reversed_number_map.clone()).unwrap_or(first);
 
-            first * 10 + second
+            first * 10 + last
         })
         .sum::<u32>()
         .to_string())

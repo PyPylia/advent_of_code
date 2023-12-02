@@ -1,6 +1,6 @@
 # advent_of_code
 
-These are my solutions to [Advent of Code 2022](https://adventofcode.com/2022)
+These are my solutions to [Advent of Code 2023](https://adventofcode.com/2023)
 
 I'd highly recommend you try solve these challenges yourself before viewing my solutions, especially since this is all undocumented (and probably badly written) and not meant to be used as a guide.
 

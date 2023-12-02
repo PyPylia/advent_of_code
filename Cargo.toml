@@ -6,44 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.66"
+color-eyre = "0.6.2"
+eyre = "0.6.9"
 
-[[bin]]
-name = "day_1"
-path = "src/day_1/main.rs"
-test = false
-
-[[bin]]
-name = "day_2"
-path = "src/day_2/main.rs"
-test = false
-
-[[bin]]
-name = "day_3"
-path = "src/day_3/main.rs"
-test = false
-
-[[bin]]
-name = "day_4"
-path = "src/day_4/main.rs"
-test = false
-
-[[bin]]
-name = "day_5"
-path = "src/day_5/main.rs"
-test = false
-
-[[bin]]
-name = "day_6"
-path = "src/day_6/main.rs"
-test = false
-
-[[bin]]
-name = "day_7"
-path = "src/day_7/main.rs"
-test = false
-
-[[bin]]
-name = "day_8"
-path = "src/day_8/main.rs"
-test = false
+[profile.dev.package.backtrace]
+opt-level = 3

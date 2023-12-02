@@ -1,12 +1,16 @@
 use std::{env, fs};
 
 mod day_1;
+mod day_2;
 
 const CHALLENGES: &[(
     u8,
     fn(&str) -> eyre::Result<String>,
     Option<fn(&str) -> eyre::Result<String>>,
-)] = &[(1, day_1::first, Some(day_1::second))];
+)] = &[
+    (1, day_1::first, Some(day_1::second)),
+    (2, day_2::first, Some(day_2::second)),
+];
 
 fn main() -> eyre::Result<()> {
     color_eyre::install()?;

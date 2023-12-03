@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 color-eyre = "0.6.2"
 eyre = "0.6.9"
+ndarray = "0.15.6"
 
 [profile.dev.package.backtrace]
 opt-level = 3

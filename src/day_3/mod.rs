@@ -1,8 +1,5 @@
 use ndarray::Array2;
-use std::{
-    ptr::{self, NonNull},
-    str::FromStr,
-};
+use std::{ptr::NonNull, str::FromStr};
 
 #[derive(Debug)]
 struct SchematicNumber {
@@ -61,34 +58,35 @@ impl Schematic {
                 continue;
             }
 
-            let mut first: *const SchematicNumber = ptr::null();
-            let mut second: *const SchematicNumber = ptr::null();
+            let mut first = None;
+            let mut second = None;
             for x_offset in -1..=1 {
                 for y_offset in -1..=1 {
                     if let Some(number_ptr) = &self.grid[(
                         (part.position.0 as isize + x_offset) as usize,
                         (part.position.1 as isize + y_offset) as usize,
                     )] {
-                        if !second.is_null()
-                            && second as usize != number_ptr.as_ptr() as usize
-                            && first as usize != number_ptr.as_ptr() as usize
-                        {
-                            continue 'parts;
+                        if let (Some(first), Some(second)) = (first, second) {
+                            if number_ptr != first && number_ptr != second {
+                                continue 'parts;
+                            }
                         }
 
-                        if first.is_null() {
-                            first = number_ptr.as_ptr() as *const SchematicNumber;
-                        } else if second.is_null() && first as usize != number_ptr.as_ptr() as usize
-                        {
-                            second = number_ptr.as_ptr() as *const SchematicNumber;
+                        match first {
+                            Some(first) => {
+                                if number_ptr != first {
+                                    second = Some(number_ptr);
+                                }
+                            }
+                            None => first = Some(number_ptr),
                         }
                     }
                 }
             }
 
             // SAFETY: We have a reference and therefore the data is not being written to.
-            if let (Some(first), Some(second)) = unsafe { (first.as_ref(), second.as_ref()) } {
-                sum += first.number as u32 * second.number as u32;
+            if let (Some(first), Some(second)) = (first, second) {
+                sum += unsafe { first.as_ref().number as u32 * second.as_ref().number as u32 };
             }
         }
 

@@ -87,11 +87,7 @@ pub fn second(input: &str) -> eyre::Result<String> {
 
     i = 0;
     while let Some((id, winning_count)) = resultant_cards.pop() {
-        resultant_cards.reserve(winning_count);
-        for x in id..id + winning_count {
-            resultant_cards.push(original_cards[x])
-        }
-
+        resultant_cards.extend(&original_cards[id..id + winning_count]);
         i += 1;
     }
 

@@ -73,23 +73,32 @@ pub fn first(input: &str) -> eyre::Result<String> {
     Ok(sum.to_string())
 }
 
+const MAX_CARD_COUNT: usize = 200;
 pub fn second(input: &str) -> eyre::Result<String> {
-    let mut i = 0usize;
-    let mut original_cards = Vec::with_capacity(input.lines().count());
-
+    let mut winning_counts = Vec::with_capacity(MAX_CARD_COUNT);
     for line in input.lines() {
-        i += 1;
         let card: Scratchcard = line.parse()?;
-        original_cards.push((i, card.winning_count() as usize))
+        winning_counts.push(card.winning_count() as usize)
     }
 
-    let mut resultant_cards = original_cards.clone();
+    let mut copy_array = [1u32; MAX_CARD_COUNT];
+    let mut sum = 0;
+    let mut i = 0;
 
-    i = 0;
-    while let Some((id, winning_count)) = resultant_cards.pop() {
-        resultant_cards.extend(&original_cards[id..id + winning_count]);
-        i += 1;
+    while i < winning_counts.len() {
+        match &mut copy_array[i] {
+            0 => i += 1,
+            this => {
+                sum += 1;
+                *this -= 1;
+                let winning_count = winning_counts[i];
+                let next = i + 1;
+                for card in &mut copy_array[next..next + winning_count] {
+                    *card += 1;
+                }
+            }
+        }
     }
 
-    Ok(i.to_string())
+    Ok(sum.to_string())
 }

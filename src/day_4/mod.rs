@@ -74,18 +74,19 @@ pub fn first(input: &str) -> eyre::Result<String> {
 }
 
 pub fn second(input: &str) -> eyre::Result<String> {
-    let cards: eyre::Result<Vec<Scratchcard>> = input.lines().map(Scratchcard::from_str).collect();
-    let original_cards: Vec<(usize, u32)> = cards?
-        .into_iter()
-        .map(|card| card.winning_count())
-        .enumerate()
-        .collect();
+    let mut i = 0usize;
+    let mut original_cards = Vec::with_capacity(input.lines().count());
+    for line in input.lines() {
+        i += 1;
+        let card: Scratchcard = line.parse()?;
+        original_cards.push((i, card.winning_count()))
+    }
 
     let mut resultant_cards = original_cards.clone();
     let mut i = 0u32;
 
     while let Some((id, winning_count)) = resultant_cards.pop() {
-        for x in id + 1..id + winning_count as usize + 1 {
+        for x in id..id + winning_count as usize {
             resultant_cards.push(original_cards[x])
         }
 

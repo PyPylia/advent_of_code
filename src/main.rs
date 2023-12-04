@@ -3,6 +3,7 @@ use std::{env, fs};
 mod day_1;
 mod day_2;
 mod day_3;
+mod day_4;
 
 const CHALLENGES: &[(
     u8,
@@ -12,6 +13,7 @@ const CHALLENGES: &[(
     (1, day_1::first, Some(day_1::second)),
     (2, day_2::first, Some(day_2::second)),
     (3, day_3::first, Some(day_3::second)),
+    (4, day_4::first, Some(day_4::second)),
 ];
 
 fn main() -> eyre::Result<()> {

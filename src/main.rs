@@ -1,4 +1,4 @@
-use std::{env, fs};
+use std::{env, fs, time::Instant};
 
 mod day_1;
 mod day_2;
@@ -29,17 +29,28 @@ fn main() -> eyre::Result<()> {
     for (number, first, second) in CHALLENGES {
         if challenge == *number {
             let input = fs::read_to_string(format!("src/day_{}/input.txt", challenge))?;
+
+            let first_start = Instant::now();
             let first_answer = first(&input)?;
+            let first_end = Instant::now() - first_start;
+
             println!(
-                "\nThe first answer for day {} is: {}",
-                challenge, first_answer
+                "\nThe first answer ({:.5}s) for day {} is: {}",
+                first_end.as_secs_f64(),
+                challenge,
+                first_answer
             );
 
             if let Some(second) = second {
+                let second_start = Instant::now();
                 let second_answer = second(&input)?;
+                let second_end = Instant::now() - second_start;
+
                 println!(
-                    "The second answer for day {} is: {}",
-                    challenge, second_answer
+                    "The second answer ({:.5}s) for day {} is: {}",
+                    second_end.as_secs_f64(),
+                    challenge,
+                    second_answer
                 );
             }
 

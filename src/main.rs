@@ -4,6 +4,7 @@ mod day_1;
 mod day_2;
 mod day_3;
 mod day_4;
+mod day_5;
 
 const CHALLENGES: &[(
     u8,
@@ -14,6 +15,7 @@ const CHALLENGES: &[(
     (2, day_2::first, Some(day_2::second)),
     (3, day_3::first, Some(day_3::second)),
     (4, day_4::first, Some(day_4::second)),
+    (5, day_5::first, Some(day_5::second)),
 ];
 
 fn main() -> eyre::Result<()> {

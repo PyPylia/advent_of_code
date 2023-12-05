@@ -75,7 +75,9 @@ impl Map {
                 }
             }
 
-            unmapped.append(&mut new_unmapped);
+            let old_unmapped = unmapped;
+            unmapped = new_unmapped;
+            new_unmapped = old_unmapped;
         }
 
         unmapped.append(&mut mapped);

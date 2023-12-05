@@ -1,4 +1,4 @@
-use std::{num::ParseIntError, ops::Range, str::FromStr};
+use std::{mem, num::ParseIntError, ops::Range, str::FromStr};
 
 struct MapItem {
     destination_start: u64,
@@ -75,9 +75,7 @@ impl Map {
                 }
             }
 
-            let old_unmapped = unmapped;
-            unmapped = new_unmapped;
-            new_unmapped = old_unmapped;
+            mem::swap(&mut unmapped, &mut new_unmapped);
         }
 
         unmapped.append(&mut mapped);
@@ -155,9 +153,7 @@ pub fn second(input: &str) -> eyre::Result<String> {
             second.append(&mut map.map_range(range))
         }
 
-        let old_first = first;
-        first = second;
-        second = old_first;
+        mem::swap(&mut first, &mut second);
     }
 
     Ok(first

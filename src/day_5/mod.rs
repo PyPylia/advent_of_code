@@ -46,35 +46,30 @@ impl Map {
         for item in &self.items {
             while let Some(range) = unmapped.pop() {
                 let source_end = item.source_start + item.length;
-                let destination_end = item.destination_start + item.length;
                 if range.end <= item.source_start || range.start >= source_end {
                     new_unmapped.push(range);
                     continue;
                 }
 
+                let destination_end = item.destination_start + item.length;
+                let mapped_start = range.start + item.destination_start - item.source_start;
+                let mapped_end = range.end + item.destination_start - item.source_start;
+
                 match (range.start >= item.source_start, range.end > source_end) {
                     (false, false) => {
-                        mapped.push(
-                            item.destination_start
-                                ..item.destination_start + range.end - item.source_start,
-                        );
+                        mapped.push(item.destination_start..mapped_end);
                         new_unmapped.push(range.start..item.source_start);
                     }
                     (false, true) => {
                         mapped.push(item.destination_start..destination_end);
                         new_unmapped.push(range.start..item.source_start);
-                        new_unmapped.push(item.source_start + item.length..range.end);
+                        new_unmapped.push(source_end..range.end);
                     }
                     (true, false) => {
-                        mapped.push(
-                            range.start + item.destination_start - item.source_start
-                                ..range.end + item.destination_start - item.source_start,
-                        );
+                        mapped.push(mapped_start..mapped_end);
                     }
                     (true, true) => {
-                        mapped.push(
-                            item.destination_start + range.start - range.end..destination_end,
-                        );
+                        mapped.push(mapped_start..destination_end);
                         new_unmapped.push(source_end..range.end);
                     }
                 }
@@ -154,12 +149,10 @@ pub fn second(input: &str) -> eyre::Result<String> {
 
     let mut second = Vec::with_capacity(first.len() * 2);
     for map in maps {
-        //print!("Mapped {:?}", first);
         while let Some(range) = first.pop() {
             second.append(&mut map.map_range(range))
         }
 
-        //println!(" to {:?}", second);
         let old_first = first;
         first = second;
         second = old_first;

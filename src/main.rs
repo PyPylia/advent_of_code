@@ -8,8 +8,8 @@ mod day_5;
 
 const CHALLENGES: &[(
     u8,
-    fn(&str) -> eyre::Result<String>,
-    Option<fn(&str) -> eyre::Result<String>>,
+    fn(&str) -> eyre::Result<u64>,
+    Option<fn(&str) -> eyre::Result<u64>>,
 )] = &[
     (1, day_1::first, Some(day_1::second)),
     (2, day_2::first, Some(day_2::second)),

@@ -116,26 +116,26 @@ impl FromStr for Game {
     }
 }
 
-pub fn first(input: &str) -> eyre::Result<String> {
+pub fn first(input: &str) -> eyre::Result<u64> {
     let mut counter = 0;
 
     for line in input.lines() {
         let game: Game = line.parse()?;
         if game.is_valid() {
-            counter += game.id as u32;
+            counter += game.id as u64;
         }
     }
 
-    Ok(counter.to_string())
+    Ok(counter)
 }
 
-pub fn second(input: &str) -> eyre::Result<String> {
+pub fn second(input: &str) -> eyre::Result<u64> {
     let mut counter = 0;
 
     for line in input.lines() {
         let game: Game = line.parse()?;
-        counter += game.minimum_power();
+        counter += game.minimum_power() as u64;
     }
 
-    Ok(counter.to_string())
+    Ok(counter)
 }

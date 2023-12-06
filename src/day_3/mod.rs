@@ -165,14 +165,14 @@ impl FromStr for Schematic {
     }
 }
 
-pub fn first(input: &str) -> eyre::Result<String> {
+pub fn first(input: &str) -> eyre::Result<u64> {
     let mut schematic: Schematic = input.parse()?;
     schematic.update_neighbours();
 
-    Ok(schematic.sum_parts().to_string())
+    Ok(schematic.sum_parts() as u64)
 }
 
-pub fn second(input: &str) -> eyre::Result<String> {
+pub fn second(input: &str) -> eyre::Result<u64> {
     let schematic: Schematic = input.parse()?;
-    Ok(schematic.gear_ratios().to_string())
+    Ok(schematic.gear_ratios() as u64)
 }

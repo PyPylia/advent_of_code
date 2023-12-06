@@ -62,19 +62,19 @@ impl FromStr for Scratchcard {
     }
 }
 
-pub fn first(input: &str) -> eyre::Result<String> {
+pub fn first(input: &str) -> eyre::Result<u64> {
     let mut sum = 0;
 
     for line in input.lines() {
         let card: Scratchcard = line.parse()?;
-        sum += card.calculate_points();
+        sum += card.calculate_points() as u64;
     }
 
-    Ok(sum.to_string())
+    Ok(sum)
 }
 
 const MAX_CARD_COUNT: usize = 200;
-pub fn second(input: &str) -> eyre::Result<String> {
+pub fn second(input: &str) -> eyre::Result<u64> {
     let mut winning_counts = Vec::with_capacity(MAX_CARD_COUNT);
     for line in input.lines() {
         let card: Scratchcard = line.parse()?;
@@ -100,5 +100,5 @@ pub fn second(input: &str) -> eyre::Result<String> {
         }
     }
 
-    Ok(sum.to_string())
+    Ok(sum)
 }

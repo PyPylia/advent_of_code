@@ -39,7 +39,7 @@ impl Map {
     }
 
     fn map_range(&self, type_range: Range<u64>) -> Vec<Range<u64>> {
-        let mut new_unmapped = vec![];
+        let mut new_unmapped = Vec::with_capacity(2);
         let mut unmapped = vec![type_range];
         let mut mapped = vec![];
 
@@ -121,7 +121,7 @@ fn get_sections(input: &str) -> eyre::Result<(impl Iterator<Item = &str>, Vec<Ma
     ))
 }
 
-pub fn first(input: &str) -> eyre::Result<String> {
+pub fn first(input: &str) -> eyre::Result<u64> {
     let (seeds, maps) = get_sections(input)?;
     let seeds: Result<Vec<u64>, ParseIntError> = seeds.map(u64::from_str).collect();
     let mut seeds = seeds?;
@@ -132,14 +132,13 @@ pub fn first(input: &str) -> eyre::Result<String> {
         }
     }
 
-    Ok(seeds
+    seeds
         .into_iter()
         .min()
-        .ok_or(eyre::eyre!("No minimum seed"))?
-        .to_string())
+        .ok_or(eyre::eyre!("No minimum seed"))
 }
 
-pub fn second(input: &str) -> eyre::Result<String> {
+pub fn second(input: &str) -> eyre::Result<u64> {
     let (mut seeds_iter, maps) = get_sections(input)?;
 
     let mut first = vec![];
@@ -165,10 +164,9 @@ pub fn second(input: &str) -> eyre::Result<String> {
         second = old_first;
     }
 
-    Ok(first
+    first
         .into_iter()
         .map(|range| range.start)
         .min()
-        .ok_or(eyre::eyre!("No minimum seed"))?
-        .to_string())
+        .ok_or(eyre::eyre!("No minimum seed"))
 }

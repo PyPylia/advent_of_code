@@ -1,4 +1,4 @@
-pub fn first(input: &str) -> eyre::Result<String> {
+pub fn first(input: &str) -> eyre::Result<u64> {
     Ok(input
         .lines()
         .map(|line| {
@@ -10,8 +10,7 @@ pub fn first(input: &str) -> eyre::Result<String> {
 
             first * 10 + last
         })
-        .sum::<u32>()
-        .to_string())
+        .sum::<u32>() as u64)
 }
 
 const NUMBER_MAP: &[(&str, u32)] = &[
@@ -51,7 +50,7 @@ fn get_first_number(
     None
 }
 
-pub fn second(input: &str) -> eyre::Result<String> {
+pub fn second(input: &str) -> eyre::Result<u64> {
     let number_map = NUMBER_MAP
         .iter()
         .map(|(pattern, number)| (pattern.to_string(), *number));
@@ -69,6 +68,5 @@ pub fn second(input: &str) -> eyre::Result<String> {
 
             first * 10 + last
         })
-        .sum::<u32>()
-        .to_string())
+        .sum::<u32>() as u64)
 }

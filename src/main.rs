@@ -1,6 +1,9 @@
 #![feature(array_try_from_fn)]
 
-use std::{array, env, fs, time::Instant};
+use std::{
+    array, env, fs,
+    time::{Duration, Instant},
+};
 
 mod day_1;
 mod day_2;
@@ -22,6 +25,44 @@ const CHALLENGES: &[(
     (6, day_6::first, Some(day_6::second)),
 ];
 
+fn time_challenge(
+    day: u8,
+    part: &'static str,
+    challenge: &fn(&str) -> eyre::Result<u64>,
+    input: &str,
+) -> eyre::Result<()> {
+    let initial_start = Instant::now();
+    let initial_answer = challenge(input);
+    let initial_end = Instant::now() - initial_start;
+    let initial_answer = initial_answer?;
+
+    println!(
+        "\nThe {} answer ({:?}) for day {} is: {}",
+        part, initial_end, day, initial_answer
+    );
+
+    let average_times = 10u128.pow(9) / initial_end.as_nanos() * 2;
+    let average_start = Instant::now();
+    for _ in 0..average_times {
+        if challenge(input)? != initial_answer {
+            return Err(eyre::eyre!(
+                "Got mismatching answers on day {}, {} part",
+                day,
+                part
+            ));
+        }
+    }
+    let average_end = Instant::now() - average_start;
+
+    println!(
+        "    Averaged time over {:?}: {:?}",
+        average_end,
+        Duration::from_nanos((average_end.as_nanos() / average_times) as u64)
+    );
+
+    Ok(())
+}
+
 fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
@@ -35,29 +76,9 @@ fn main() -> eyre::Result<()> {
     for (number, first, second) in CHALLENGES {
         if challenge == *number {
             let input = fs::read_to_string(format!("src/day_{}/input.txt", challenge))?;
-
-            let first_start = Instant::now();
-            let first_answer = first(&input)?;
-            let first_end = Instant::now() - first_start;
-
-            println!(
-                "\nThe first answer ({:.5}s) for day {} is: {}",
-                first_end.as_secs_f64(),
-                challenge,
-                first_answer
-            );
-
+            time_challenge(challenge, "first", first, &input)?;
             if let Some(second) = second {
-                let second_start = Instant::now();
-                let second_answer = second(&input)?;
-                let second_end = Instant::now() - second_start;
-
-                println!(
-                    "The second answer ({:.5}s) for day {} is: {}",
-                    second_end.as_secs_f64(),
-                    challenge,
-                    second_answer
-                );
+                time_challenge(challenge, "second", second, &input)?;
             }
 
             return Ok(());

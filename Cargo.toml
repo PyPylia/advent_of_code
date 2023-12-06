@@ -14,3 +14,8 @@ ndarray = "0.15.6"
 
 [profile.dev.package.backtrace]
 opt-level = 3
+
+[profile.release]
+lto = true
+panic = "abort"
+codegen-units = 1

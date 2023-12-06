@@ -1,3 +1,4 @@
+use crate::collect_to_array;
 use std::{mem, num::ParseIntError, ops::Range, str::FromStr};
 
 struct MapItem {
@@ -10,10 +11,8 @@ impl FromStr for MapItem {
     type Err = eyre::Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let sections: Vec<&str> = s.split(" ").collect();
-        let [destination_str, source_str, length_str] = sections.as_slice() else {
-            return Err(eyre::eyre!("Invalid map item"));
-        };
+        let [destination_str, source_str, length_str] =
+            collect_to_array(s.split(" ")).ok_or(eyre::eyre!("Invalid map item"))?;
 
         Ok(Self {
             destination_start: destination_str.parse()?,

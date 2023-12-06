@@ -1,3 +1,4 @@
+use crate::collect_to_array;
 use std::{num::NonZeroU8, str::FromStr};
 
 struct Set {
@@ -40,13 +41,11 @@ impl FromStr for Set {
         let mut blue = None;
 
         for subset in s.split(", ") {
-            let sections: Vec<&str> = subset.split(" ").collect();
-            let [number_str, colour] = sections.as_slice() else {
-                return Err(eyre::eyre!("Invalid subset: {}", subset));
-            };
+            let [number_str, colour] = collect_to_array(subset.split(" "))
+                .ok_or(eyre::eyre!("Invalid subset: {}", subset))?;
             let number = number_str.parse()?;
 
-            match *colour {
+            match colour {
                 "red" => red = Some(number),
                 "green" => green = Some(number),
                 "blue" => blue = Some(number),
@@ -101,10 +100,8 @@ impl FromStr for Game {
         let remaining = s
             .strip_prefix("Game ")
             .ok_or(eyre::eyre!("Invalid game: {}", s))?;
-        let sections: Vec<&str> = remaining.split(": ").collect();
-        let [id_str, sets_str] = sections.as_slice() else {
-            return Err(eyre::eyre!("Invalid game: {}", s));
-        };
+        let [id_str, sets_str] =
+            collect_to_array(remaining.split(": ")).ok_or(eyre::eyre!("Invalid game: {}", s))?;
 
         let id = id_str.parse()?;
         let sets = sets_str

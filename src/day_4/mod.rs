@@ -1,3 +1,4 @@
+use crate::collect_to_array;
 use std::str::FromStr;
 
 #[derive(Clone)]
@@ -26,15 +27,10 @@ impl FromStr for Scratchcard {
         let remaining = s
             .strip_prefix("Card ")
             .ok_or(eyre::eyre!("Invalid card: {}", s))?;
-        let sections: Vec<&str> = remaining.split(": ").collect();
-        let [_id_str, numbers_str] = sections.as_slice() else {
-            return Err(eyre::eyre!("Invalid card: {}", s));
-        };
-
-        let sections: Vec<&str> = numbers_str.split(" | ").collect();
-        let [winning_numbers_str, owned_numbers_str] = sections.as_slice() else {
-            return Err(eyre::eyre!("Invalid card: {}", s));
-        };
+        let [_id_str, numbers_str] =
+            collect_to_array(remaining.split(": ")).ok_or(eyre::eyre!("Invalid card: {}", s))?;
+        let [winning_numbers_str, owned_numbers_str] =
+            collect_to_array(numbers_str.split(" | ")).ok_or(eyre::eyre!("Invalid card: {}", s))?;
 
         let mut winning_numbers = 0;
         let mut owned_numbers = 0;

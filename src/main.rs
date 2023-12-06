@@ -1,4 +1,6 @@
-use std::{env, fs, time::Instant};
+#![feature(array_try_from_fn)]
+
+use std::{array, env, fs, time::Instant};
 
 mod day_1;
 mod day_2;
@@ -63,4 +65,8 @@ fn main() -> eyre::Result<()> {
     }
 
     Err(eyre::eyre!("Invalid challenge number given."))
+}
+
+fn collect_to_array<T, const N: usize>(mut iter: impl Iterator<Item = T>) -> Option<[T; N]> {
+    array::try_from_fn(|_| iter.next())
 }

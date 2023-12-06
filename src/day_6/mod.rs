@@ -6,7 +6,7 @@ fn fast_half_float(f: f32) -> f32 {
 }
 
 fn get_solution(time: u64, distance: u64) -> u64 {
-    let a = ((time.pow(2) - 4 * distance) as f32).sqrt();
+    let a = ((time * time - 4 * distance) as f32).sqrt();
     let min = fast_half_float(time as f32 - a).floor() as u64;
     let max = fast_half_float(time as f32 + a).ceil() as u64;
     max - min - 1

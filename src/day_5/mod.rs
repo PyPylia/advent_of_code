@@ -1,5 +1,5 @@
 use crate::collect_to_array;
-use std::{mem, num::ParseIntError, ops::Range, str::FromStr};
+use std::{mem, ops::Range, str::FromStr};
 
 struct MapItem {
     destination_start: u64,
@@ -15,15 +15,15 @@ impl FromStr for MapItem {
             collect_to_array(s.split(" ")).ok_or(eyre::eyre!("Invalid map item"))?;
 
         Ok(Self {
-            destination_start: destination_str.parse()?,
-            source_start: source_str.parse()?,
-            length: length_str.parse()?,
+            destination_start: lexical_core::parse(destination_str.as_bytes())?,
+            source_start: lexical_core::parse(source_str.as_bytes())?,
+            length: lexical_core::parse(length_str.as_bytes())?,
         })
     }
 }
 
 struct Map {
-    items: Vec<MapItem>,
+    items: heapless::Vec<MapItem, 48>,
 }
 
 impl Map {
@@ -89,22 +89,22 @@ impl FromStr for Map {
         let mut lines = s.lines();
         let _header_info = lines.next().ok_or(eyre::eyre!("Invalid map"))?;
 
-        let mut items = Vec::with_capacity(s.lines().count());
+        let mut items = heapless::Vec::new();
         while let Some(line) = lines.next() {
-            items.push(line.trim_end().parse()?)
+            items.push(line.trim_end().parse()?).ok();
         }
 
         Ok(Self { items })
     }
 }
 
-fn get_sections(input: &str) -> eyre::Result<(impl Iterator<Item = &str>, Vec<Map>)> {
-    let sections: Vec<&str> = input.split("\r\n\r\n").collect();
+fn get_sections(input: &str) -> eyre::Result<(impl Iterator<Item = &str>, heapless::Vec<Map, 7>)> {
+    let sections: heapless::Vec<&str, 8> = input.split("\r\n\r\n").collect();
     let (seeds, maps) = sections
         .split_first()
         .ok_or(eyre::eyre!("No seed header"))?;
 
-    let maps: eyre::Result<Vec<Map>> = maps.into_iter().map(|s| s.parse()).collect();
+    let maps: eyre::Result<heapless::Vec<Map, 7>> = maps.into_iter().map(|s| s.parse()).collect();
     Ok((
         seeds
             .strip_prefix("seeds: ")
@@ -117,7 +117,8 @@ fn get_sections(input: &str) -> eyre::Result<(impl Iterator<Item = &str>, Vec<Ma
 
 pub fn first(input: &str) -> eyre::Result<u64> {
     let (seeds, maps) = get_sections(input)?;
-    let seeds: Result<Vec<u64>, ParseIntError> = seeds.map(u64::from_str).collect();
+    let seeds: Result<heapless::Vec<u64, 20>, lexical_core::Error> =
+        seeds.map(|s| lexical_core::parse(s.as_bytes())).collect();
     let mut seeds = seeds?;
 
     for map in maps {
@@ -137,11 +138,13 @@ pub fn second(input: &str) -> eyre::Result<u64> {
 
     let mut first = vec![];
     while let Some(start_str) = seeds_iter.next() {
-        let range_start: u64 = start_str.parse()?;
-        let length: u64 = seeds_iter
-            .next()
-            .ok_or_else(|| eyre::eyre!("No length given"))?
-            .parse()?;
+        let range_start: u64 = lexical_core::parse(start_str.as_bytes())?;
+        let length: u64 = lexical_core::parse(
+            seeds_iter
+                .next()
+                .ok_or_else(|| eyre::eyre!("No length given"))?
+                .as_bytes(),
+        )?;
         first.push(range_start..range_start + length);
     }
 

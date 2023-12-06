@@ -1,5 +1,3 @@
-use std::num::ParseIntError;
-
 fn fast_half_float(f: f32) -> f32 {
     let bits = f.to_bits();
     let exponent = (((bits >> 23) & 0xf7) as u8).wrapping_sub(1);
@@ -30,11 +28,11 @@ fn get_line_strs(input: &str) -> eyre::Result<(&str, &str)> {
     ))
 }
 
-fn str_to_u32_vec(input: &str) -> Result<Vec<u32>, ParseIntError> {
+fn str_to_u32_vec(input: &str) -> Result<heapless::Vec<u32, 8>, lexical_core::Error> {
     input
         .split(" ")
         .filter(|s| !s.is_empty())
-        .map(str::parse)
+        .map(|s| lexical_core::parse(s.as_bytes()))
         .collect()
 }
 
@@ -53,8 +51,8 @@ pub fn first(input: &str) -> eyre::Result<u64> {
 
 pub fn second(input: &str) -> eyre::Result<u64> {
     let (time_str, distance_str) = get_line_strs(input)?;
-    let time: u64 = time_str.replace(" ", "").parse()?;
-    let distance: u64 = distance_str.replace(" ", "").parse()?;
+    let time = lexical_core::parse(time_str.replace(" ", "").as_bytes())?;
+    let distance = lexical_core::parse(distance_str.replace(" ", "").as_bytes())?;
 
     Ok(get_solution(time, distance))
 }

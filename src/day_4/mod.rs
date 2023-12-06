@@ -38,7 +38,7 @@ impl FromStr for Scratchcard {
         for number in winning_numbers_str
             .split(" ")
             .filter(|s| !s.is_empty())
-            .map(u8::from_str)
+            .map(|s| lexical_core::parse::<u8>(s.as_bytes()))
         {
             winning_numbers |= 1 << number?;
         }
@@ -46,7 +46,7 @@ impl FromStr for Scratchcard {
         for number in owned_numbers_str
             .split(" ")
             .filter(|s| !s.is_empty())
-            .map(u8::from_str)
+            .map(|s| lexical_core::parse::<u8>(s.as_bytes()))
         {
             owned_numbers |= 1 << number?;
         }
@@ -71,10 +71,10 @@ pub fn first(input: &str) -> eyre::Result<u64> {
 
 const MAX_CARD_COUNT: usize = 200;
 pub fn second(input: &str) -> eyre::Result<u64> {
-    let mut winning_counts = Vec::with_capacity(MAX_CARD_COUNT);
+    let mut winning_counts = heapless::Vec::<usize, MAX_CARD_COUNT>::new();
     for line in input.lines() {
         let card: Scratchcard = line.parse()?;
-        winning_counts.push(card.winning_count() as usize)
+        winning_counts.push(card.winning_count() as usize).ok();
     }
 
     let mut copy_array = [1u32; MAX_CARD_COUNT];

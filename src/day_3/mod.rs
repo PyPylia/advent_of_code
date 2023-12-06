@@ -135,7 +135,7 @@ impl FromStr for Schematic {
                     }
 
                     let number = Box::into_raw(Box::new(SchematicNumber {
-                        number: buf.parse()?,
+                        number: lexical_core::parse(buf.as_bytes())?,
                         is_part: false,
                     }));
                     let number_ptr = unsafe { NonNull::new_unchecked(number) };

@@ -43,7 +43,8 @@ impl FromStr for Set {
         for subset in s.split(", ") {
             let [number_str, colour] = collect_to_array(subset.split(" "))
                 .ok_or(eyre::eyre!("Invalid subset: {}", subset))?;
-            let number = number_str.parse()?;
+            let number = NonZeroU8::new(lexical_core::parse(number_str.as_bytes())?)
+                .expect("number should not be 0");
 
             match colour {
                 "red" => red = Some(number),
@@ -59,7 +60,7 @@ impl FromStr for Set {
 
 struct Game {
     id: u8,
-    sets: Vec<Set>,
+    sets: heapless::Vec<Set, 100>,
 }
 
 macro_rules! minimum_colour {
@@ -103,11 +104,11 @@ impl FromStr for Game {
         let [id_str, sets_str] =
             collect_to_array(remaining.split(": ")).ok_or(eyre::eyre!("Invalid game: {}", s))?;
 
-        let id = id_str.parse()?;
+        let id = lexical_core::parse(id_str.as_bytes())?;
         let sets = sets_str
             .split("; ")
             .map(Set::from_str)
-            .collect::<eyre::Result<Vec<Set>>>()?;
+            .collect::<eyre::Result<_>>()?;
 
         Ok(Game { id, sets })
     }

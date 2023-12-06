@@ -9,9 +9,9 @@ fn fast_half_float(f: f32) -> f32 {
 
 fn get_solution(time: u64, distance: u64) -> u64 {
     let a = ((time.pow(2) - 4 * distance) as f32).sqrt();
-    let min = fast_half_float(time as f32 - a).floor() as u64 + 1;
-    let max = fast_half_float(time as f32 + a).ceil() as u64 - 1;
-    max - min + 1
+    let min = fast_half_float(time as f32 - a).floor() as u64;
+    let max = fast_half_float(time as f32 + a).ceil() as u64;
+    max - min - 1
 }
 
 fn get_line_strs(input: &str) -> eyre::Result<(&str, &str)> {

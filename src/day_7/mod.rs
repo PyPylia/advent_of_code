@@ -64,12 +64,7 @@ enum State {
 }
 
 impl HandType {
-    fn new_without_joker(cards: &[Card; 5]) -> Self {
-        let mut counts: [u8; 13] = [0; 13];
-        for card in cards {
-            counts[*card as usize] += 1;
-        }
-
+    fn calculate_state(counts: [u8; 13]) -> Self {
         let mut state = State::Default;
         for count in counts {
             match count {
@@ -100,8 +95,17 @@ impl HandType {
         }
     }
 
+    fn new_without_joker(cards: &[Card; 5]) -> Self {
+        let mut counts: [u8; 13] = [0; 13];
+        for card in cards {
+            counts[*card as usize] += 1;
+        }
+
+        Self::calculate_state(counts)
+    }
+
     fn new_with_joker(cards: &[Card; 5]) -> Self {
-        let mut joker_count = 0;
+        let mut joker_count: u8 = 0;
         let mut counts: [u8; 13] = [0; 13];
         for card in cards {
             if *card == Card::J {
@@ -111,33 +115,38 @@ impl HandType {
             }
         }
 
-        let mut state = State::Default;
-        for count in counts {
-            match count + joker_count {
-                5 => return Self::FiveOfAKind,
-                4 => return Self::FourOfAKind,
-                3 => {
-                    if let State::Default = state {
-                        state = State::ThreeOfAKind;
-                    } else {
-                        return Self::FullHouse;
-                    }
-                }
-                2 => match state {
-                    State::ThreeOfAKind => return Self::FullHouse,
-                    State::Default => state = State::OnePair,
-                    State::OnePair => return Self::TwoPair,
-                },
-                1 | 0 => (),
-                // SAFETY: There are a max of 5 cards so nothing can be outside of the range 0-5
-                _ => unsafe { unreachable_unchecked() },
-            }
+        let original_type = Self::calculate_state(counts);
+        if joker_count == 0 {
+            return original_type;
         }
 
-        match state {
-            State::ThreeOfAKind => Self::ThreeOfAKind,
-            State::Default => Self::HighCard,
-            State::OnePair => Self::OnePair,
+        match original_type {
+            Self::FiveOfAKind => Self::FiveOfAKind,
+            Self::FourOfAKind => Self::FiveOfAKind,
+            Self::FullHouse => match joker_count {
+                1 => Self::FourOfAKind,
+                _greater => Self::FiveOfAKind,
+            },
+            Self::ThreeOfAKind => match joker_count {
+                1 => Self::FourOfAKind,
+                _greater => Self::FiveOfAKind,
+            },
+            Self::TwoPair => match joker_count {
+                1 => Self::FullHouse,
+                2 => Self::FourOfAKind,
+                _greater => Self::FiveOfAKind,
+            },
+            Self::OnePair => match joker_count {
+                1 => Self::ThreeOfAKind,
+                2 => Self::FourOfAKind,
+                _greater => Self::FiveOfAKind,
+            },
+            Self::HighCard => match joker_count {
+                1 => Self::OnePair,
+                2 => Self::ThreeOfAKind,
+                3 => Self::FourOfAKind,
+                _greater => Self::FiveOfAKind,
+            },
         }
     }
 }
@@ -170,17 +179,15 @@ impl Hand {
         match self.hand_type.cmp(&other.hand_type) {
             Ordering::Equal => {
                 for (my_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
-                    if *my_card == Card::J {
-                        return if *other_card == Card::J {
-                            Ordering::Equal
-                        } else {
-                            Ordering::Less
-                        };
-                    }
-                    match my_card.cmp(other_card) {
-                        Ordering::Equal => continue,
-                        other => return other,
-                    }
+                    return match (*my_card == Card::J, *other_card == Card::J) {
+                        (true, true) => Ordering::Equal,
+                        (true, false) => Ordering::Less,
+                        (false, true) => Ordering::Greater,
+                        (false, false) => match my_card.cmp(other_card) {
+                            Ordering::Equal => continue,
+                            other => other,
+                        },
+                    };
                 }
 
                 Ordering::Equal

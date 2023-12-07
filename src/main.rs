@@ -1,4 +1,4 @@
-#![feature(array_try_from_fn)]
+#![feature(array_try_from_fn, iter_array_chunks)]
 
 use std::{
     array, env, fs,

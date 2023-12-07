@@ -134,17 +134,13 @@ pub fn first(input: &str) -> eyre::Result<u64> {
 }
 
 pub fn second(input: &str) -> eyre::Result<u64> {
-    let (mut seeds_iter, maps) = get_sections(input)?;
+    let (seeds_iter, maps) = get_sections(input)?;
+    let mut seeds_iter = seeds_iter.array_chunks();
 
     let mut first = vec![];
-    while let Some(start_str) = seeds_iter.next() {
+    while let Some([start_str, length_str]) = seeds_iter.next() {
         let range_start: u64 = lexical_core::parse(start_str.as_bytes())?;
-        let length: u64 = lexical_core::parse(
-            seeds_iter
-                .next()
-                .ok_or_else(|| eyre::eyre!("No length given"))?
-                .as_bytes(),
-        )?;
+        let length: u64 = lexical_core::parse(length_str.as_bytes())?;
         first.push(range_start..range_start + length);
     }
 

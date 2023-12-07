@@ -1,11 +1,6 @@
 #![feature(array_try_from_fn, iter_array_chunks)]
 
-use std::{
-    array, env,
-    error::Error,
-    fs,
-    time::{Duration, Instant},
-};
+use std::{array, env, error::Error, fs, time::Instant};
 
 mod day_1;
 mod day_2;
@@ -45,24 +40,29 @@ fn time_challenge(
         part, initial_end, day, initial_answer
     );
 
-    let average_times = 10u128.pow(9) / initial_end.as_nanos() * 2;
-    let average_start = Instant::now();
-    for _ in 0..average_times {
-        if challenge(input)? != initial_answer {
-            return Err(eyre::eyre!(
-                "Got mismatching answers on day {}, {} part",
-                day,
-                part
-            ));
-        }
-    }
-    let average_end = Instant::now() - average_start;
+    #[cfg(not(debug_assertions))]
+    {
+        use std::time::Duration;
 
-    println!(
-        "    Averaged time over {:?}: {:?}",
-        average_end,
-        Duration::from_nanos((average_end.as_nanos() / average_times) as u64)
-    );
+        let average_times = 10u128.pow(9) / initial_end.as_nanos() * 2;
+        let average_start = Instant::now();
+        for _ in 0..average_times {
+            if challenge(input)? != initial_answer {
+                return Err(eyre::eyre!(
+                    "Got mismatching answers on day {}, {} part",
+                    day,
+                    part
+                ));
+            }
+        }
+        let average_end = Instant::now() - average_start;
+
+        println!(
+            "    Averaged time over {:?}: {:?}",
+            average_end,
+            Duration::from_nanos((average_end.as_nanos() / average_times) as u64)
+        );
+    }
 
     Ok(())
 }

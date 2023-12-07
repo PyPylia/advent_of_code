@@ -20,6 +20,17 @@ enum Card {
     A,
 }
 
+impl Card {
+    fn cmp_with_joker(&self, other: &Card) -> Ordering {
+        match (*self == Card::J, *other == Card::J) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (false, false) => self.cmp(other),
+        }
+    }
+}
+
 #[derive(Debug, Error)]
 #[error("Invalid card")]
 struct InvalidCard;
@@ -159,11 +170,11 @@ struct Hand {
 }
 
 impl Hand {
-    fn sort_without_joker(&self, other: &Self) -> Ordering {
+    fn sort(&self, other: &Self, card_sorter: fn(&Card, &Card) -> Ordering) -> Ordering {
         match self.hand_type.cmp(&other.hand_type) {
             Ordering::Equal => {
                 for (my_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
-                    match my_card.cmp(other_card) {
+                    match card_sorter(my_card, other_card) {
                         Ordering::Equal => continue,
                         other => return other,
                     }
@@ -175,25 +186,12 @@ impl Hand {
         }
     }
 
-    fn sort_with_joker(&self, other: &Self) -> Ordering {
-        match self.hand_type.cmp(&other.hand_type) {
-            Ordering::Equal => {
-                for (my_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
-                    return match (*my_card == Card::J, *other_card == Card::J) {
-                        (true, true) => Ordering::Equal,
-                        (true, false) => Ordering::Less,
-                        (false, true) => Ordering::Greater,
-                        (false, false) => match my_card.cmp(other_card) {
-                            Ordering::Equal => continue,
-                            other => other,
-                        },
-                    };
-                }
+    fn sort_without_joker(&self, other: &Self) -> Ordering {
+        self.sort(other, Card::cmp)
+    }
 
-                Ordering::Equal
-            }
-            other => other,
-        }
+    fn sort_with_joker(&self, other: &Self) -> Ordering {
+        self.sort(other, Card::cmp_with_joker)
     }
 
     fn from_str(s: &str, with_joker: bool) -> eyre::Result<Self> {
@@ -227,6 +225,7 @@ fn get_total_winnings(input: &str, with_joker: bool) -> eyre::Result<u64> {
     } else {
         Hand::sort_without_joker
     });
+
     let mut sum = 0;
     for (index, hand) in hands.iter().enumerate() {
         sum += hand.bid as u64 * (index as u64 + 1);

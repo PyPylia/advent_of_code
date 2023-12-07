@@ -1,7 +1,9 @@
 #![feature(array_try_from_fn, iter_array_chunks)]
 
 use std::{
-    array, env, fs,
+    array, env,
+    error::Error,
+    fs,
     time::{Duration, Instant},
 };
 
@@ -11,6 +13,7 @@ mod day_3;
 mod day_4;
 mod day_5;
 mod day_6;
+mod day_7;
 
 const CHALLENGES: &[(
     u8,
@@ -23,6 +26,7 @@ const CHALLENGES: &[(
     (4, day_4::first, Some(day_4::second)),
     (5, day_5::first, Some(day_5::second)),
     (6, day_6::first, Some(day_6::second)),
+    (7, day_7::first, Some(day_7::second)),
 ];
 
 fn time_challenge(
@@ -90,4 +94,14 @@ fn main() -> eyre::Result<()> {
 
 fn collect_to_array<T, const N: usize>(mut iter: impl Iterator<Item = T>) -> Option<[T; N]> {
     array::try_from_fn(|_| iter.next())
+}
+
+fn try_collect_to_array<T, E: Error + Send + Sync + 'static, const N: usize>(
+    mut iter: impl Iterator<Item = Result<T, E>>,
+) -> eyre::Result<[T; N]> {
+    array::try_from_fn(|_| {
+        iter.next()
+            .ok_or_else(|| eyre::eyre!("Not enough elements to build array"))
+            .and_then(|inner| inner.map_err(Into::into))
+    })
 }

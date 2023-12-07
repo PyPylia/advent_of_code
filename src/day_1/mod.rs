@@ -13,7 +13,7 @@ pub fn first(input: &str) -> eyre::Result<u64> {
         .sum::<u32>() as u64)
 }
 
-const NUMBER_MAP: &[(&str, u32)] = &[
+const NUMBER_MAP: [(&str, u32); 9] = [
     ("one", 1),
     ("two", 2),
     ("three", 3),
@@ -25,9 +25,21 @@ const NUMBER_MAP: &[(&str, u32)] = &[
     ("nine", 9),
 ];
 
+const REVERSED_NUMBER_MAP: [(&str, u32); 9] = [
+    ("eno", 1),
+    ("owt", 2),
+    ("eerht", 3),
+    ("ruof", 4),
+    ("evif", 5),
+    ("xis", 6),
+    ("neves", 7),
+    ("thgie", 8),
+    ("enin", 9),
+];
+
 fn get_first_number(
     input: impl Iterator<Item = char>,
-    number_map: impl Iterator<Item = (String, u32)> + Clone,
+    number_map: [(&str, u32); 9],
 ) -> Option<u32> {
     let mut buf = String::new();
     for ch in input {
@@ -51,20 +63,11 @@ fn get_first_number(
 }
 
 pub fn second(input: &str) -> eyre::Result<u64> {
-    let number_map = NUMBER_MAP
-        .iter()
-        .map(|(pattern, number)| (pattern.to_string(), *number));
-
-    let reversed_number_map = NUMBER_MAP
-        .iter()
-        .map(|(pattern, number)| (pattern.chars().rev().collect(), *number));
-
     Ok(input
         .lines()
         .map(|line| {
-            let first = get_first_number(line.chars(), number_map.clone()).unwrap_or(0);
-            let last =
-                get_first_number(line.chars().rev(), reversed_number_map.clone()).unwrap_or(first);
+            let first = get_first_number(line.chars(), NUMBER_MAP).unwrap_or(0);
+            let last = get_first_number(line.chars().rev(), REVERSED_NUMBER_MAP).unwrap_or(first);
 
             first * 10 + last
         })

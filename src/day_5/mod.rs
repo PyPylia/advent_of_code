@@ -12,7 +12,7 @@ impl FromStr for MapItem {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let [destination_str, source_str, length_str] =
-            collect_to_array(s.split(" ")).ok_or(eyre::eyre!("Invalid map item"))?;
+            collect_to_array(s.split(" ")).ok_or_else(|| eyre::eyre!("Invalid map item"))?;
 
         Ok(Self {
             destination_start: lexical_core::parse(destination_str.as_bytes())?,
@@ -87,7 +87,7 @@ impl FromStr for Map {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut lines = s.lines();
-        let _header_info = lines.next().ok_or(eyre::eyre!("Invalid map"))?;
+        let _header_info = lines.next().ok_or_else(|| eyre::eyre!("Invalid map"))?;
 
         let mut items = heapless::Vec::new();
         while let Some(line) = lines.next() {
@@ -102,13 +102,13 @@ fn get_sections(input: &str) -> eyre::Result<(impl Iterator<Item = &str>, heaple
     let sections: heapless::Vec<&str, 8> = input.split("\r\n\r\n").collect();
     let (seeds, maps) = sections
         .split_first()
-        .ok_or(eyre::eyre!("No seed header"))?;
+        .ok_or_else(|| eyre::eyre!("No seed header"))?;
 
     let maps: eyre::Result<heapless::Vec<Map, 7>> = maps.into_iter().map(|s| s.parse()).collect();
     Ok((
         seeds
             .strip_prefix("seeds: ")
-            .ok_or(eyre::eyre!("Invalid seed header"))?
+            .ok_or_else(|| eyre::eyre!("Invalid seed header"))?
             .trim_end()
             .split(" "),
         maps?,
@@ -130,7 +130,7 @@ pub fn first(input: &str) -> eyre::Result<u64> {
     seeds
         .into_iter()
         .min()
-        .ok_or(eyre::eyre!("No minimum seed"))
+        .ok_or_else(|| eyre::eyre!("No minimum seed"))
 }
 
 pub fn second(input: &str) -> eyre::Result<u64> {
@@ -157,5 +157,5 @@ pub fn second(input: &str) -> eyre::Result<u64> {
         .into_iter()
         .map(|range| range.start)
         .min()
-        .ok_or(eyre::eyre!("No minimum seed"))
+        .ok_or_else(|| eyre::eyre!("No minimum seed"))
 }

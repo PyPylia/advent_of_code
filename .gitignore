@@ -1,3 +1,5 @@
 /target
 ownership_proof.txt
 input.txt
+flamegraph.svg
+perf.data*

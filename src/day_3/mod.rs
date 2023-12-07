@@ -104,7 +104,7 @@ impl FromStr for Schematic {
             s.lines().count(),
             s.lines()
                 .next()
-                .ok_or(eyre::eyre!("Empty input"))?
+                .ok_or_else(|| eyre::eyre!("Empty input"))?
                 .chars()
                 .count(),
         ));

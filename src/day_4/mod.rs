@@ -26,11 +26,12 @@ impl FromStr for Scratchcard {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let remaining = s
             .strip_prefix("Card ")
-            .ok_or(eyre::eyre!("Invalid card: {}", s))?;
-        let [_id_str, numbers_str] =
-            collect_to_array(remaining.split(": ")).ok_or(eyre::eyre!("Invalid card: {}", s))?;
+            .ok_or_else(|| eyre::eyre!("Invalid card: {}", s))?;
+        let [_id_str, numbers_str] = collect_to_array(remaining.split(": "))
+            .ok_or_else(|| eyre::eyre!("Invalid card: {}", s))?;
         let [winning_numbers_str, owned_numbers_str] =
-            collect_to_array(numbers_str.split(" | ")).ok_or(eyre::eyre!("Invalid card: {}", s))?;
+            collect_to_array(numbers_str.split(" | "))
+                .ok_or_else(|| eyre::eyre!("Invalid card: {}", s))?;
 
         let mut winning_numbers = 0;
         let mut owned_numbers = 0;

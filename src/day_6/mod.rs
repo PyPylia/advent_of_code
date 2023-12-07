@@ -17,14 +17,14 @@ fn get_line_strs(input: &str) -> eyre::Result<(&str, &str)> {
     Ok((
         lines
             .next()
-            .ok_or(eyre::eyre!("No times given"))?
+            .ok_or_else(|| eyre::eyre!("No times given"))?
             .strip_prefix("Time:")
-            .ok_or(eyre::eyre!("Invalid times"))?,
+            .ok_or_else(|| eyre::eyre!("Invalid times"))?,
         lines
             .next()
-            .ok_or(eyre::eyre!("No distances given"))?
+            .ok_or_else(|| eyre::eyre!("No distances given"))?
             .strip_prefix("Distance:")
-            .ok_or(eyre::eyre!("Invalid distances"))?,
+            .ok_or_else(|| eyre::eyre!("Invalid distances"))?,
     ))
 }
 

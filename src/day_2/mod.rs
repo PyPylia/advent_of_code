@@ -42,7 +42,7 @@ impl FromStr for Set {
 
         for subset in s.split(", ") {
             let [number_str, colour] = collect_to_array(subset.split(" "))
-                .ok_or(eyre::eyre!("Invalid subset: {}", subset))?;
+                .ok_or_else(|| eyre::eyre!("Invalid subset: {}", subset))?;
             let number = NonZeroU8::new(lexical_core::parse(number_str.as_bytes())?)
                 .expect("number should not be 0");
 
@@ -100,9 +100,9 @@ impl FromStr for Game {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let remaining = s
             .strip_prefix("Game ")
-            .ok_or(eyre::eyre!("Invalid game: {}", s))?;
-        let [id_str, sets_str] =
-            collect_to_array(remaining.split(": ")).ok_or(eyre::eyre!("Invalid game: {}", s))?;
+            .ok_or_else(|| eyre::eyre!("Invalid game: {}", s))?;
+        let [id_str, sets_str] = collect_to_array(remaining.split(": "))
+            .ok_or_else(|| eyre::eyre!("Invalid game: {}", s))?;
 
         let id = lexical_core::parse(id_str.as_bytes())?;
         let sets = sets_str

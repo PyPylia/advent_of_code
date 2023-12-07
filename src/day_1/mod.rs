@@ -52,8 +52,8 @@ fn get_first_number(
         }
 
         buf.push(ch);
-        for (pattern, number) in number_map.clone() {
-            if buf.ends_with(&pattern) {
+        for (pattern, number) in number_map {
+            if buf.ends_with(pattern) {
                 return Some(number);
             }
         }

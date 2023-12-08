@@ -1,4 +1,3 @@
-use crate::collect_to_array;
 use std::{num::NonZeroU8, str::FromStr};
 
 struct Set {
@@ -41,7 +40,8 @@ impl FromStr for Set {
         let mut blue = None;
 
         for subset in s.split(", ") {
-            let [number_str, colour] = collect_to_array(subset.split(" "))
+            let (number_str, colour) = subset
+                .split_once(" ")
                 .ok_or_else(|| eyre::eyre!("Invalid subset: {}", subset))?;
             let number = NonZeroU8::new(lexical_core::parse(number_str.as_bytes())?)
                 .expect("number should not be 0");
@@ -101,7 +101,8 @@ impl FromStr for Game {
         let remaining = s
             .strip_prefix("Game ")
             .ok_or_else(|| eyre::eyre!("Invalid game: {}", s))?;
-        let [id_str, sets_str] = collect_to_array(remaining.split(": "))
+        let (id_str, sets_str) = remaining
+            .split_once(": ")
             .ok_or_else(|| eyre::eyre!("Invalid game: {}", s))?;
 
         let id = lexical_core::parse(id_str.as_bytes())?;

@@ -1,4 +1,9 @@
-#![feature(array_try_from_fn, iter_array_chunks, split_array)]
+#![feature(
+    array_try_from_fn,
+    iter_array_chunks,
+    split_array,
+    maybe_uninit_uninit_array
+)]
 
 use std::{array, env, error::Error, fs, time::Instant};
 
@@ -9,6 +14,7 @@ mod day_4;
 mod day_5;
 mod day_6;
 mod day_7;
+mod day_8;
 
 const CHALLENGES: &[(
     u8,
@@ -22,6 +28,7 @@ const CHALLENGES: &[(
     (5, day_5::first, Some(day_5::second)),
     (6, day_6::first, Some(day_6::second)),
     (7, day_7::first, Some(day_7::second)),
+    (8, day_8::first, Some(day_8::second)),
 ];
 
 fn time_challenge(

@@ -60,24 +60,26 @@ impl FromStr for Scratchcard {
 }
 
 pub fn first(input: &str) -> eyre::Result<u64> {
-    let mut sum = 0;
-
-    for line in input.lines() {
-        let card: Scratchcard = line.parse()?;
-        sum += card.calculate_points() as u64;
-    }
-
-    Ok(sum)
+    input
+        .lines()
+        .map(|line| {
+            let card: Scratchcard = line.parse()?;
+            Ok(card.calculate_points() as u64)
+        })
+        .sum()
 }
 
 const MAX_CARD_COUNT: usize = 200;
 pub fn second(input: &str) -> eyre::Result<u64> {
-    let mut winning_counts = heapless::Vec::<usize, MAX_CARD_COUNT>::new();
-    for line in input.lines() {
-        let card: Scratchcard = line.parse()?;
-        winning_counts.push(card.winning_count() as usize).ok();
-    }
+    let winning_counts: eyre::Result<heapless::Vec<usize, MAX_CARD_COUNT>> = input
+        .lines()
+        .map(|line| {
+            let card: Scratchcard = line.parse()?;
+            Ok(card.winning_count() as usize)
+        })
+        .collect();
 
+    let winning_counts = winning_counts?;
     let mut copy_array = [1u32; MAX_CARD_COUNT];
     let mut sum = 0;
     let mut i = 0;

@@ -32,8 +32,8 @@ impl Card {
 }
 
 #[derive(Debug, Error)]
-#[error("Invalid card")]
-struct InvalidCard;
+#[error("Invalid card: {0}")]
+struct InvalidCard(char);
 impl TryFrom<char> for Card {
     type Error = InvalidCard;
 
@@ -52,7 +52,7 @@ impl TryFrom<char> for Card {
             '4' => Self::Four,
             '3' => Self::Three,
             '2' => Self::Two,
-            _ => return Err(InvalidCard),
+            other => return Err(InvalidCard(other)),
         })
     }
 }
@@ -106,7 +106,7 @@ impl HandType {
         }
     }
 
-    fn new_without_joker(cards: &[Card; 5]) -> Self {
+    fn from_cards_without_joker(cards: &[Card; 5]) -> Self {
         let mut counts: [u8; 13] = [0; 13];
         for card in cards {
             counts[*card as usize] += 1;
@@ -115,7 +115,7 @@ impl HandType {
         Self::calculate_state(counts)
     }
 
-    fn new_with_joker(cards: &[Card; 5]) -> Self {
+    fn from_cards_with_joker(cards: &[Card; 5]) -> Self {
         let mut joker_count: u8 = 0;
         let mut counts: [u8; 13] = [0; 13];
         for card in cards {
@@ -199,9 +199,9 @@ impl Hand {
             collect_to_array(s.split(" ")).ok_or_else(|| eyre::eyre!("Invalid hand: {}", s))?;
         let cards = try_collect_to_array(cards_str.chars().map(Card::try_from))?;
         let hand_type = if with_joker {
-            HandType::new_with_joker(&cards)
+            HandType::from_cards_with_joker(&cards)
         } else {
-            HandType::new_without_joker(&cards)
+            HandType::from_cards_without_joker(&cards)
         };
         let bid = lexical_core::parse(bid_str.as_bytes())?;
 
@@ -214,24 +214,23 @@ impl Hand {
 }
 
 fn get_total_winnings(input: &str, with_joker: bool) -> eyre::Result<u64> {
-    let mut hands = vec![];
-    for line in input.lines() {
-        let hand = Hand::from_str(line, with_joker)?;
-        hands.push(hand);
-    }
+    let hands: eyre::Result<Vec<Hand>> = input
+        .lines()
+        .map(|line| Hand::from_str(line, with_joker))
+        .collect();
 
+    let mut hands = hands?;
     hands.sort_unstable_by(if with_joker {
         Hand::sort_with_joker
     } else {
         Hand::sort_without_joker
     });
 
-    let mut sum = 0;
-    for (index, hand) in hands.iter().enumerate() {
-        sum += hand.bid as u64 * (index as u64 + 1);
-    }
-
-    Ok(sum)
+    Ok(hands
+        .iter()
+        .enumerate()
+        .map(|(index, hand)| hand.bid as u64 * (index as u64 + 1))
+        .sum())
 }
 
 pub fn first(input: &str) -> eyre::Result<u64> {

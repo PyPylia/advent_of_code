@@ -27,7 +27,7 @@ struct Map {
 }
 
 impl Map {
-    fn map_type(&self, item_type: u64) -> u64 {
+    fn map_item(&self, item_type: u64) -> u64 {
         for item in &self.items {
             if item_type >= item.source_start && item_type < item.source_start + item.length {
                 return item_type + item.destination_start - item.source_start;
@@ -88,13 +88,10 @@ impl FromStr for Map {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut lines = s.lines();
         let _header_info = lines.next().ok_or_else(|| eyre::eyre!("Invalid map"))?;
+        let items: eyre::Result<heapless::Vec<MapItem, 48>> =
+            lines.map(|line| line.trim_end().parse()).collect();
 
-        let mut items = heapless::Vec::new();
-        while let Some(line) = lines.next() {
-            items.push(line.trim_end().parse()?).ok();
-        }
-
-        Ok(Self { items })
+        Ok(Self { items: items? })
     }
 }
 
@@ -123,7 +120,7 @@ pub fn first(input: &str) -> eyre::Result<u64> {
 
     for map in maps {
         for seed in &mut seeds {
-            *seed = map.map_type(*seed)
+            *seed = map.map_item(*seed)
         }
     }
 
@@ -135,15 +132,16 @@ pub fn first(input: &str) -> eyre::Result<u64> {
 
 pub fn second(input: &str) -> eyre::Result<u64> {
     let (seeds_iter, maps) = get_sections(input)?;
-    let mut seeds_iter = seeds_iter.array_chunks();
+    let first: Result<Vec<Range<u64>>, lexical_core::Error> = seeds_iter
+        .array_chunks()
+        .map(|[start_str, length_str]| {
+            let range_start: u64 = lexical_core::parse(start_str.as_bytes())?;
+            let length: u64 = lexical_core::parse(length_str.as_bytes())?;
+            Ok(range_start..range_start + length)
+        })
+        .collect();
 
-    let mut first = vec![];
-    while let Some([start_str, length_str]) = seeds_iter.next() {
-        let range_start: u64 = lexical_core::parse(start_str.as_bytes())?;
-        let length: u64 = lexical_core::parse(length_str.as_bytes())?;
-        first.push(range_start..range_start + length);
-    }
-
+    let mut first = first?;
     let mut second = Vec::with_capacity(first.len() * 2);
     for map in maps {
         while let Some(range) = first.pop() {

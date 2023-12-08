@@ -41,12 +41,11 @@ pub fn first(input: &str) -> eyre::Result<u64> {
     let times = str_to_u32_vec(times_str)?;
     let distances = str_to_u32_vec(distances_str)?;
 
-    let mut solution = 1;
-    for (time, distance) in times.into_iter().zip(distances) {
-        solution *= get_solution(time as u64, distance as u64);
-    }
-
-    Ok(solution)
+    Ok(times
+        .into_iter()
+        .zip(distances)
+        .map(|(time, distance)| get_solution(time as u64, distance as u64))
+        .product())
 }
 
 pub fn second(input: &str) -> eyre::Result<u64> {

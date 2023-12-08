@@ -107,45 +107,45 @@ impl HandType {
         counts
     }
 
-    fn from_cards_without_joker(cards: &[Card; 5]) -> Self {
-        Self::calculate_state(Self::get_counts(cards))
-    }
-
-    fn from_cards_with_joker(cards: &[Card; 5]) -> Self {
+    fn from_cards<const WITH_JOKER: bool>(cards: &[Card; 5]) -> Self {
         let mut counts = Self::get_counts(cards);
-        let joker_count = mem::take(&mut counts[Card::J as usize]);
-        let original_type = Self::calculate_state(counts);
-        if joker_count == 0 {
-            return original_type;
-        }
+        if WITH_JOKER {
+            let joker_count = mem::take(&mut counts[Card::J as usize]);
+            let original_type = Self::calculate_state(counts);
+            if joker_count == 0 {
+                return original_type;
+            }
 
-        match original_type {
-            Self::FiveOfAKind => Self::FiveOfAKind,
-            Self::FourOfAKind => Self::FiveOfAKind,
-            Self::FullHouse => match joker_count {
-                1 => Self::FourOfAKind,
-                _greater => Self::FiveOfAKind,
-            },
-            Self::ThreeOfAKind => match joker_count {
-                1 => Self::FourOfAKind,
-                _greater => Self::FiveOfAKind,
-            },
-            Self::TwoPair => match joker_count {
-                1 => Self::FullHouse,
-                2 => Self::FourOfAKind,
-                _greater => Self::FiveOfAKind,
-            },
-            Self::OnePair => match joker_count {
-                1 => Self::ThreeOfAKind,
-                2 => Self::FourOfAKind,
-                _greater => Self::FiveOfAKind,
-            },
-            Self::HighCard => match joker_count {
-                1 => Self::OnePair,
-                2 => Self::ThreeOfAKind,
-                3 => Self::FourOfAKind,
-                _greater => Self::FiveOfAKind,
-            },
+            match original_type {
+                Self::FiveOfAKind => Self::FiveOfAKind,
+                Self::FourOfAKind => Self::FiveOfAKind,
+                Self::FullHouse => match joker_count {
+                    1 => Self::FourOfAKind,
+                    _greater => Self::FiveOfAKind,
+                },
+                Self::ThreeOfAKind => match joker_count {
+                    1 => Self::FourOfAKind,
+                    _greater => Self::FiveOfAKind,
+                },
+                Self::TwoPair => match joker_count {
+                    1 => Self::FullHouse,
+                    2 => Self::FourOfAKind,
+                    _greater => Self::FiveOfAKind,
+                },
+                Self::OnePair => match joker_count {
+                    1 => Self::ThreeOfAKind,
+                    2 => Self::FourOfAKind,
+                    _greater => Self::FiveOfAKind,
+                },
+                Self::HighCard => match joker_count {
+                    1 => Self::OnePair,
+                    2 => Self::ThreeOfAKind,
+                    3 => Self::FourOfAKind,
+                    _greater => Self::FiveOfAKind,
+                },
+            }
+        } else {
+            Self::calculate_state(counts)
         }
     }
 }
@@ -158,11 +158,15 @@ struct Hand {
 }
 
 impl Hand {
-    fn sort(&self, other: &Self, card_sorter: fn(&Card, &Card) -> Ordering) -> Ordering {
+    fn cmp<const WITH_JOKER: bool>(&self, other: &Self) -> Ordering {
         match self.hand_type.cmp(&other.hand_type) {
             Ordering::Equal => {
                 for (my_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
-                    match card_sorter(my_card, other_card) {
+                    match if WITH_JOKER {
+                        my_card.cmp_with_joker(other_card)
+                    } else {
+                        my_card.cmp(other_card)
+                    } {
                         Ordering::Equal => continue,
                         other => return other,
                     }
@@ -174,27 +178,13 @@ impl Hand {
         }
     }
 
-    fn sort_without_joker(&self, other: &Self) -> Ordering {
-        self.sort(other, Card::cmp)
-    }
-
-    fn sort_with_joker(&self, other: &Self) -> Ordering {
-        self.sort(other, Card::cmp_with_joker)
-    }
-
-    fn from_str(s: &str, with_joker: bool) -> eyre::Result<Self> {
+    fn from_str<const WITH_JOKER: bool>(s: &str) -> eyre::Result<Self> {
         let (cards_bytes, bid_bytes) = s.as_bytes().split_array_ref::<5>();
         let bid = lexical_core::parse(&bid_bytes[1..])?;
-
         let cards =
             try_collect_to_array(cards_bytes.into_iter().map(|byte| Card::try_from(*byte)))?;
 
-        let hand_type = if with_joker {
-            HandType::from_cards_with_joker(&cards)
-        } else {
-            HandType::from_cards_without_joker(&cards)
-        };
-
+        let hand_type = HandType::from_cards::<WITH_JOKER>(&cards);
         Ok(Self {
             cards,
             hand_type,
@@ -203,18 +193,14 @@ impl Hand {
     }
 }
 
-fn get_total_winnings(input: &str, with_joker: bool) -> eyre::Result<u64> {
+fn get_total_winnings<const WITH_JOKER: bool>(input: &str) -> eyre::Result<u64> {
     let hands: eyre::Result<Vec<Hand>> = input
         .lines()
-        .map(|line| Hand::from_str(line, with_joker))
+        .map(|line| Hand::from_str::<WITH_JOKER>(line))
         .collect();
 
     let mut hands = hands?;
-    if with_joker {
-        hands.sort_unstable_by(Hand::sort_with_joker)
-    } else {
-        hands.sort_unstable_by(Hand::sort_without_joker)
-    }
+    hands.sort_unstable_by(Hand::cmp::<WITH_JOKER>);
 
     Ok(hands
         .iter()
@@ -224,9 +210,9 @@ fn get_total_winnings(input: &str, with_joker: bool) -> eyre::Result<u64> {
 }
 
 pub fn first(input: &str) -> eyre::Result<u64> {
-    get_total_winnings(input, false)
+    get_total_winnings::<false>(input)
 }
 
 pub fn second(input: &str) -> eyre::Result<u64> {
-    get_total_winnings(input, true)
+    get_total_winnings::<true>(input)
 }

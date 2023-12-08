@@ -1,4 +1,4 @@
-#![feature(array_try_from_fn, iter_array_chunks)]
+#![feature(array_try_from_fn, iter_array_chunks, split_array)]
 
 use std::{array, env, error::Error, fs, time::Instant};
 

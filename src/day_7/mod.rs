@@ -1,7 +1,8 @@
-use crate::{collect_to_array, try_collect_to_array};
-use std::{cmp::Ordering, hint::unreachable_unchecked};
+use crate::try_collect_to_array;
+use std::{cmp::Ordering, mem};
 use thiserror::Error;
 
+#[allow(dead_code)] // Required because we transmute to Card::Two to Card::Nine
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
 #[repr(u8)]
 enum Card {
@@ -34,25 +35,18 @@ impl Card {
 #[derive(Debug, Error)]
 #[error("Invalid card: {0}")]
 struct InvalidCard(char);
-impl TryFrom<char> for Card {
+impl TryFrom<u8> for Card {
     type Error = InvalidCard;
 
-    fn try_from(value: char) -> Result<Self, Self::Error> {
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         Ok(match value {
-            'A' => Self::A,
-            'K' => Self::K,
-            'Q' => Self::Q,
-            'J' => Self::J,
-            'T' => Self::T,
-            '9' => Self::Nine,
-            '8' => Self::Eight,
-            '7' => Self::Seven,
-            '6' => Self::Six,
-            '5' => Self::Five,
-            '4' => Self::Four,
-            '3' => Self::Three,
-            '2' => Self::Two,
-            other => return Err(InvalidCard(other)),
+            b'A' => Self::A,
+            b'K' => Self::K,
+            b'Q' => Self::Q,
+            b'J' => Self::J,
+            b'T' => Self::T,
+            b'2'..=b'9' => unsafe { std::mem::transmute(value - b'2') },
+            other => return Err(InvalidCard(other as char)),
         })
     }
 }
@@ -93,9 +87,7 @@ impl HandType {
                     State::Default => state = State::OnePair,
                     State::OnePair => return Self::TwoPair,
                 },
-                1 | 0 => (),
-                // SAFETY: There are a max of 5 cards so nothing can be outside of the range 0-5
-                _ => unsafe { unreachable_unchecked() },
+                _ => {}
             }
         }
 
@@ -106,26 +98,22 @@ impl HandType {
         }
     }
 
-    fn from_cards_without_joker(cards: &[Card; 5]) -> Self {
-        let mut counts: [u8; 13] = [0; 13];
+    fn get_counts(cards: &[Card; 5]) -> [u8; 13] {
+        let mut counts = [0; 13];
         for card in cards {
             counts[*card as usize] += 1;
         }
 
-        Self::calculate_state(counts)
+        counts
+    }
+
+    fn from_cards_without_joker(cards: &[Card; 5]) -> Self {
+        Self::calculate_state(Self::get_counts(cards))
     }
 
     fn from_cards_with_joker(cards: &[Card; 5]) -> Self {
-        let mut joker_count: u8 = 0;
-        let mut counts: [u8; 13] = [0; 13];
-        for card in cards {
-            if *card == Card::J {
-                joker_count += 1;
-            } else {
-                counts[*card as usize] += 1;
-            }
-        }
-
+        let mut counts = Self::get_counts(cards);
+        let joker_count = mem::take(&mut counts[Card::J as usize]);
         let original_type = Self::calculate_state(counts);
         if joker_count == 0 {
             return original_type;
@@ -195,15 +183,17 @@ impl Hand {
     }
 
     fn from_str(s: &str, with_joker: bool) -> eyre::Result<Self> {
-        let [cards_str, bid_str] =
-            collect_to_array(s.split(" ")).ok_or_else(|| eyre::eyre!("Invalid hand: {}", s))?;
-        let cards = try_collect_to_array(cards_str.chars().map(Card::try_from))?;
+        let (cards_bytes, bid_bytes) = s.as_bytes().split_array_ref::<5>();
+        let bid = lexical_core::parse(&bid_bytes[1..])?;
+
+        let cards =
+            try_collect_to_array(cards_bytes.into_iter().map(|byte| Card::try_from(*byte)))?;
+
         let hand_type = if with_joker {
             HandType::from_cards_with_joker(&cards)
         } else {
             HandType::from_cards_without_joker(&cards)
         };
-        let bid = lexical_core::parse(bid_str.as_bytes())?;
 
         Ok(Self {
             cards,
@@ -220,11 +210,11 @@ fn get_total_winnings(input: &str, with_joker: bool) -> eyre::Result<u64> {
         .collect();
 
     let mut hands = hands?;
-    hands.sort_unstable_by(if with_joker {
-        Hand::sort_with_joker
+    if with_joker {
+        hands.sort_unstable_by(Hand::sort_with_joker)
     } else {
-        Hand::sort_without_joker
-    });
+        hands.sort_unstable_by(Hand::sort_without_joker)
+    }
 
     Ok(hands
         .iter()

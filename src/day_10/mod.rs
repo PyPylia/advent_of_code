@@ -2,10 +2,6 @@ use ndarray::Array2;
 use std::mem::MaybeUninit;
 use thiserror::Error;
 
-fn position_to_index(position: (u8, u8)) -> (usize, usize) {
-    (position.0 as usize, position.1 as usize)
-}
-
 #[derive(Debug, Clone, Copy)]
 enum Direction {
     North,
@@ -25,7 +21,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Tile {
     NorthSouth,
     EastWest,
@@ -96,47 +92,8 @@ impl TryFrom<u8> for Tile {
     }
 }
 
-fn get_valid_directions(grid: &Array2<Tile>, start_pos: (u8, u8)) -> [Direction; 2] {
-    let mut valids: heapless::Vec<Direction, 2> = heapless::Vec::new();
-
-    for from in [
-        Direction::North,
-        Direction::East,
-        Direction::South,
-        Direction::West,
-    ] {
-        let next_pos = from.add_offset(start_pos);
-        if grid[position_to_index(next_pos)]
-            .follow_pipe(from)
-            .is_some()
-        {
-            valids.push(from).ok();
-        }
-    }
-
-    valids
-        .into_array()
-        .expect("Should always have two valid directions from start")
-}
-
-#[derive(Debug)]
-struct GridWalker {
-    grid: Array2<Tile>,
-    position: (u8, u8),
-    facing: Direction,
-}
-
-impl GridWalker {
-    fn step(&mut self) -> bool {
-        let tile = &self.grid[position_to_index(self.position)];
-        if *tile == Tile::Start {
-            true
-        } else {
-            self.facing = tile.follow_pipe(self.facing).expect("Invalid direction");
-            self.position = self.facing.add_offset(self.position);
-            false
-        }
-    }
+fn index_grid(grid: &Array2<Tile>, position: (u8, u8)) -> Tile {
+    grid[(position.0 as usize, position.1 as usize)]
 }
 
 fn new_grid(input: &str) -> eyre::Result<(Array2<Tile>, (u8, u8))> {
@@ -163,37 +120,54 @@ fn new_grid(input: &str) -> eyre::Result<(Array2<Tile>, (u8, u8))> {
     ))
 }
 
+#[derive(Debug)]
+struct GridWalker {
+    grid: Array2<Tile>,
+    position: (u8, u8),
+    facing: Direction,
+}
+
+impl GridWalker {
+    fn new(grid: Array2<Tile>, start_pos: (u8, u8)) -> Self {
+        for facing in [
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ] {
+            let next_pos = facing.add_offset(start_pos);
+            if index_grid(&grid, next_pos).follow_pipe(facing).is_some() {
+                return Self {
+                    grid,
+                    position: next_pos,
+                    facing,
+                };
+            }
+        }
+
+        panic!("No valid direction found from start")
+    }
+
+    fn step(&mut self) -> bool {
+        let tile = index_grid(&self.grid, self.position);
+        if tile == Tile::Start {
+            true
+        } else {
+            self.facing = tile.follow_pipe(self.facing).expect("Invalid direction");
+            self.position = self.facing.add_offset(self.position);
+            false
+        }
+    }
+}
+
 pub fn first(input: &str) -> eyre::Result<u64> {
     let (grid, start_pos) = new_grid(input)?;
-    let valid_directions = get_valid_directions(&grid, start_pos);
-
-    let width = grid.shape()[0];
-    let mut distance_grid: Array2<u16> = Array2::zeros((width, width));
-
-    let facing = valid_directions[0];
-    let mut walker = GridWalker {
-        grid,
-        position: facing.add_offset(start_pos),
-        facing,
-    };
-
-    distance_grid[position_to_index(walker.position)] = 1;
+    let mut walker = GridWalker::new(grid, start_pos);
 
     let mut steps = 1;
     while !walker.step() {
         steps += 1;
-        distance_grid[position_to_index(walker.position)] = steps;
     }
 
-    let facing = valid_directions[1];
-    walker.facing = facing;
-    walker.position = facing.add_offset(start_pos);
-
-    steps = 1;
-    while steps < distance_grid[position_to_index(walker.position)] {
-        walker.step();
-        steps += 1;
-    }
-
-    Ok(steps as u64)
+    Ok((steps / 2) as u64)
 }

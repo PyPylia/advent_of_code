@@ -1,13 +1,18 @@
+#![allow(incomplete_features)]
 #![feature(
     array_try_from_fn,
     iter_array_chunks,
     split_array,
-    maybe_uninit_uninit_array
+    maybe_uninit_uninit_array,
+    array_windows,
+    generic_const_exprs,
+    concat_idents
 )]
 
 use std::{array, env, error::Error, fs, time::Instant};
 
 mod day_1;
+mod day_10;
 mod day_2;
 mod day_3;
 mod day_4;
@@ -15,6 +20,7 @@ mod day_5;
 mod day_6;
 mod day_7;
 mod day_8;
+mod day_9;
 
 const CHALLENGES: &[(
     u8,
@@ -29,6 +35,8 @@ const CHALLENGES: &[(
     (6, day_6::first, Some(day_6::second)),
     (7, day_7::first, Some(day_7::second)),
     (8, day_8::first, Some(day_8::second)),
+    (9, day_9::first, Some(day_9::second)),
+    (10, day_10::first, None),
 ];
 
 fn time_challenge(

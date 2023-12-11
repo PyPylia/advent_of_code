@@ -1,5 +1,5 @@
+use num::integer::lcm;
 use std::{fmt, mem::MaybeUninit};
-
 use thiserror::Error;
 
 #[derive(Clone, Copy)]
@@ -109,7 +109,10 @@ type NodeMap = [MaybeUninit<Node>; 26usize.pow(3)];
 
 fn get_turns_nodes(
     input: &str,
-) -> eyre::Result<(impl Iterator<Item = Turn>, impl Iterator<Item = &str>)> {
+) -> eyre::Result<(
+    impl Iterator<Item = Turn> + Clone,
+    impl Iterator<Item = &str>,
+)> {
     let (turns_str, nodes_str) = input
         .split_once("\r\n\r\n")
         .ok_or_else(|| eyre::eyre!("Invalid input"))?;
@@ -148,37 +151,36 @@ pub fn first(input: &str) -> eyre::Result<u64> {
     Ok(steps)
 }
 
+const GHOST_COUNT: usize = 6;
 pub fn second(input: &str) -> eyre::Result<u64> {
-    let (mut turns, nodes) = get_turns_nodes(input)?;
+    let (turns, nodes) = get_turns_nodes(input)?;
 
-    let mut current_nodes = vec![];
+    let mut current_nodes: heapless::Vec<NodeID, GHOST_COUNT> = heapless::Vec::new();
     let mut node_map: NodeMap = MaybeUninit::uninit_array();
     for line in nodes {
         let (id, node) = Node::from_bytes(line.as_bytes())?;
         node_map[id.index as usize] = MaybeUninit::new(node);
         if let NodeType::Start = id.node_type {
-            current_nodes.push(id);
+            current_nodes.push(id).ok();
         }
     }
 
-    let mut steps = 0u64;
-    let mut isnt_end = true;
-    while isnt_end {
-        // SAFETY: Turns cannot be empty, and repeats infinitely with .cycle
-        let turn = unsafe { turns.next().unwrap_unchecked() };
+    Ok(current_nodes
+        .into_iter()
+        .map(|mut node_id| {
+            let mut turns = turns.clone();
+            let mut steps = 0;
 
-        isnt_end = false;
-        for node_id in &mut current_nodes {
-            // SAFETY: The node map given by Advent of Code is closed, so every node we access will always be initialized.
-            let node = unsafe { node_map[node_id.index as usize].assume_init() };
-            *node_id = node.turn(turn);
-            if node_id.node_type != NodeType::End {
-                isnt_end = true;
+            while node_id.node_type != NodeType::End {
+                // SAFETY: The node map given by Advent of Code is closed, so every node we access will always be initialized.
+                let node = unsafe { node_map[node_id.index as usize].assume_init() };
+                // SAFETY: Turns cannot be empty, and repeats infinitely with .cycle
+                node_id = node.turn(unsafe { turns.next().unwrap_unchecked() });
+                steps += 1;
             }
-        }
 
-        steps += 1;
-    }
-
-    Ok(steps)
+            steps
+        })
+        .reduce(|a, b| lcm(a, b))
+        .unwrap())
 }
